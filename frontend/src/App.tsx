@@ -8,7 +8,7 @@ function App() {
   return (
     <BrowserRouter>
       <Switch>
-        <Route exact path="/play/:roomCode" component={Play} />
+        <Route exact path="/play/:roomCode/:username" component={Play} />
         <Route path="/game" component={Game} />
         <Route path="/" component={Landing} />
       </Switch>

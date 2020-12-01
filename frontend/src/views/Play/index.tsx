@@ -1,58 +1,55 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import io from "socket.io-client";
+import useNavigation from "../../hooks/useNavigation";
 
 interface ParamTypes {
   roomCode: string;
+  username: string;
 }
 
 type ResponseJoinRoom = {
-  roomCode: string | null;
+  roomCode: string;
 };
 
 const Play: React.FC = () => {
-  const [connected, setConnected] = useState(false);
-  const [username, setUsername] = useState("");
-  const { roomCode } = useParams<ParamTypes>();
+  const [loading, setLoading] = useState(true);
+
+  const { roomCode, username } = useParams<ParamTypes>();
+
+  const { goToLanding } = useNavigation();
+
   const { current: socket } = useRef(
-    io("http://localhost:5000", {
+    io("http://localhost:5001", {
       autoConnect: false,
     })
   );
 
   useEffect(() => {
     socket.open();
+    socket.emit("join-room-player", { roomCode, username });
 
-    socket.emit("check-room", roomCode);
-
-    socket.on("room-available", (res: ResponseJoinRoom) => {
-      console.log("res");
-      if (res.roomCode === roomCode) {
-        setConnected(true);
-      }
+    socket.on("room-unavailable", () => {
+      goToLanding();
     });
+
+    socket.on("connected", () => {
+      setLoading(false);
+    });
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomCode, socket]);
 
-  const sendUsername = (e: React.FormEvent, username: string) => {
-    e.preventDefault();
-    socket.emit("set-username", { roomCode, username });
-  };
-
-  if (connected && !username) {
-    return (
-      <div>
-        <span>Connected</span>
-        <div>
-          <form onSubmit={(e) => sendUsername(e, username)}>
-            <input type="submit" />
-            <button>Send</button>
-          </form>
-        </div>
-      </div>
-    );
+  if (loading) {
+    return <div>Loading</div>;
   }
 
-  if (connected) return <div>{roomCode}</div>;
+  return (
+    <div>
+      <div>{roomCode}</div>
+      <div>{username}</div>
+    </div>
+  );
 };
 
 export default Play;

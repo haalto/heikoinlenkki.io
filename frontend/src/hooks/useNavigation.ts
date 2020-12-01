@@ -6,11 +6,16 @@ function useNavigation() {
   const goToCreateNewGame = () => {
     history.push("/game");
   };
-  const goToJoinGame = (code: string) => {
-    history.push(`/play/${code}`);
+  const goToJoinGame = (roomCode: string, username: string) => {
+    console.log(roomCode, username);
+    history.push(`/play/${roomCode}/${username}`);
   };
 
-  return { goToJoinGame, goToCreateNewGame };
+  const goToLanding = () => {
+    history.push("/");
+  };
+
+  return { goToJoinGame, goToCreateNewGame, goToLanding };
 }
 
 export default useNavigation;
