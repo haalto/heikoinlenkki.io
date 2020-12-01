@@ -3,7 +3,6 @@ import ioserver, { Socket } from "socket.io";
 import { createServer } from "http";
 import morgan from "morgan";
 import { generateRoomCode } from "./utils/helpers";
-import { emit } from "process";
 
 const app = express();
 const server = createServer(app);
@@ -14,21 +13,32 @@ const io = ioserver(server, {
     origin: "*",
   },
 });
-const PORT = 5000;
+const PORT = 5001;
 
 app.use(morgan("tiny"));
 
 server.listen(PORT, () => console.log(`Server is running on port: ${PORT}.`));
 
 const connections: Socket[] = [];
-const rooms: string[] = [];
+const rooms: Room[] = [];
+
+type Room = {
+  roomCode: string;
+  players: Player[];
+};
+
+type Player = {
+  roomCode: string;
+  username: string;
+};
 
 io.on("connection", (socket: Socket) => {
   connections.push(socket);
 
   socket.on("init-new-room", () => {
     const roomCode = generateRoomCode();
-    rooms.push(roomCode);
+    const newRoom = { roomCode, players: [] };
+    rooms.push(newRoom);
     socket.emit("room-created", { roomCode: roomCode });
   });
 
@@ -37,18 +47,28 @@ io.on("connection", (socket: Socket) => {
   });
 
   socket.on("check-room", (roomCode: string) => {
-    if (rooms.includes(roomCode)) {
+    if (rooms.filter((r) => r.roomCode === roomCode)) {
       socket.emit("room-available", { roomCode: roomCode });
+      console.log("room available");
     } else {
       socket.emit("room-available", { roomCode: null });
     }
   });
 
-  socket.on("join-room-player", (roomCode: string) => {
-    console.log(`New player joining room: ${roomCode}`);
-    socket.join(roomCode);
-    socket.emit("connected", { roomCode: roomCode });
-    //io.to(roomCode).emit('player-joined', )
+  socket.on("join-room-player", (player: Player) => {
+    console.log(`${player.username} joining room: ${player.roomCode}`);
+    socket.join(player.roomCode);
+    socket.emit("connected", { roomCode: player.roomCode });
+
+    const room = rooms.find((r) => r.roomCode);
+
+    if (room) {
+      room.players.push(player);
+    }
+
+    console.log(room);
+
+    io.to(player.roomCode).emit("player-joined", { players: room?.players });
   });
 
   socket.on("disconnect", () => {
