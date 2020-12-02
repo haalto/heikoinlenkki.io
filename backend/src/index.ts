@@ -70,6 +70,7 @@ io.on("connection", (socket: SocketWithProps) => {
     socket.join(roomCode);
   });
 
+  //First one joining the game room will be the game host.
   socket.on("join-room-player", (player: JoiningPlayerData) => {
     console.log(`${player.username} joining room: ${player.roomCode}`);
 
@@ -133,6 +134,7 @@ io.on("connection", (socket: SocketWithProps) => {
     const room = getRoomByCode(socket.roomCode);
     io.to(socket.roomCode).emit("game-state-update", room?.getGameState());
   });
+
   socket.on("disconnect", () => {
     if (socket.type === "GAME") {
       console.log(`Game room ${socket.roomCode} disconnected`);

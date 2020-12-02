@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Socket } from "socket.io-client";
+import { GameState } from "../../../types";
 
 interface PlayerProps {
   socket: typeof Socket;
@@ -7,15 +8,23 @@ interface PlayerProps {
 }
 
 const Player: React.FC<PlayerProps> = ({ socket, username }) => {
+  const [gameState, setGameState] = useState<GameState | null>(null);
   const [ready, setReady] = useState(false);
+
   useEffect(() => {
-    socket.on("game-state-update", () => {});
+    socket.on("game-state-update", (newGameState: GameState) => {
+      setGameState(newGameState);
+    });
   }, [socket]);
 
   const updateRdy = () => {
     socket.emit("player-ready", !ready);
     setReady(!ready);
   };
+
+  if (gameState?.gameStarted) {
+    return <div>Listen host!</div>;
+  }
 
   return (
     <div>
