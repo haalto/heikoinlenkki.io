@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import Host from "./Host";
 import { useParams } from "react-router-dom";
 import io from "socket.io-client";
 import useNavigation from "../../hooks/useNavigation";
@@ -8,15 +9,15 @@ interface ParamTypes {
   username: string;
 }
 
-type ResponseJoinRoom = {
-  roomCode: string;
-};
+interface PlayerData {
+  username: string;
+  isHost: boolean;
+}
 
 const Play: React.FC = () => {
   const [loading, setLoading] = useState(true);
-
+  const [playerState, setPlayerState] = useState<PlayerData | null>(null);
   const { roomCode, username } = useParams<ParamTypes>();
-
   const { goToLanding } = useNavigation();
 
   const { current: socket } = useRef(
@@ -33,8 +34,9 @@ const Play: React.FC = () => {
       goToLanding();
     });
 
-    socket.on("connected", () => {
+    socket.on("connected", (playerState: PlayerData) => {
       setLoading(false);
+      setPlayerState(playerState);
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -42,6 +44,10 @@ const Play: React.FC = () => {
 
   if (loading) {
     return <div>Loading</div>;
+  }
+
+  if (playerState?.isHost) {
+    return <Host socket={socket} username={playerState.username} />;
   }
 
   return (

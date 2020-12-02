@@ -12,11 +12,23 @@ type ResponsePlayers = {
 type Player = {
   roomCode: string;
   username: string;
+  isHost: boolean;
+};
+
+type GameState = {
+  players: Player[];
+  gameStarted: boolean;
+};
+
+const initialGameState = {
+  players: [],
+  gameStarted: false,
 };
 
 const Game: React.FC = () => {
   const [roomCode, setRoomCode] = useState<string>("");
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [gameState, setGameState] = useState<GameState>(initialGameState);
+
   const { current: socket } = useRef(
     io("http://localhost:5001", {
       autoConnect: false,
@@ -33,21 +45,40 @@ const Game: React.FC = () => {
     });
 
     socket.on("player-joined", (res: ResponsePlayers) => {
-      console.log(res.players);
-      setPlayers(res.players);
+      setGameState({ ...gameState, players: res.players });
     });
+
+    socket.on("game-state-update", (gameState: GameState) => {
+      console.log(gameState);
+      setGameState(gameState);
+    });
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket]);
 
-  const renderPlayers = () => {
-    return players.map((p, i) => <div key={i}>{p.username}</div>);
+  useEffect(() => {
+    console.log(gameState);
+  }, [gameState]);
+
+  const renderPlayers = (players: Player[]) => {
+    return players.map((p, i) => (
+      <div key={i}>{p.isHost ? <b>{p.username}</b> : p.username}</div>
+    ));
   };
+
+  if (gameState.gameStarted) {
+    return (
+      <div>
+        Game started!<div>{renderPlayers(gameState.players)}</div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <span>Join the room using following code!</span>
       <div>{roomCode}</div>
-      <div>Players:</div>
-      {renderPlayers()}
+      {renderPlayers(gameState.players)}
     </div>
   );
 };
