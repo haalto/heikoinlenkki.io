@@ -1,24 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
+import {
+  GameState,
+  ResponsePlayers,
+  ResponseCreateRoom,
+  Player,
+} from "../../types";
 import io from "socket.io-client";
-
-type ResponseCreateRoom = {
-  roomCode: string;
-};
-
-type ResponsePlayers = {
-  players: Player[];
-};
-
-type Player = {
-  roomCode: string;
-  username: string;
-  isHost: boolean;
-};
-
-type GameState = {
-  players: Player[];
-  gameStarted: boolean;
-};
 
 const initialGameState = {
   players: [],

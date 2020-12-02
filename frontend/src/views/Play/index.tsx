@@ -3,20 +3,15 @@ import Host from "./Host";
 import { useParams } from "react-router-dom";
 import io from "socket.io-client";
 import useNavigation from "../../hooks/useNavigation";
+import { Player } from "../../types";
 
 interface ParamTypes {
   roomCode: string;
   username: string;
 }
-
-interface PlayerData {
-  username: string;
-  isHost: boolean;
-}
-
 const Play: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  const [playerState, setPlayerState] = useState<PlayerData | null>(null);
+  const [playerState, setPlayerState] = useState<Player | null>(null);
   const { roomCode, username } = useParams<ParamTypes>();
   const { goToLanding } = useNavigation();
 
@@ -34,7 +29,7 @@ const Play: React.FC = () => {
       goToLanding();
     });
 
-    socket.on("connected", (playerState: PlayerData) => {
+    socket.on("connected", (playerState: Player) => {
       setLoading(false);
       setPlayerState(playerState);
     });
