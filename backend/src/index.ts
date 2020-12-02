@@ -115,9 +115,13 @@ io.on("connection", (socket: SocketWithProps) => {
     console.log(`Game started on room: ${socket.roomCode}`);
 
     if (socket.playerData.isHost) {
-      const room = rooms.find((r) => r.roomCode === socket.roomCode);
+      const room = getRoomByCode(socket.roomCode);
+      const allPlayersRdy = room
+        ?.getGameState()
+        .players.filter((p) => !p.isHost)
+        .every((p) => p.ready);
 
-      if (room) {
+      if (room && allPlayersRdy == true) {
         room.gameState.gameStarted = true;
         io.to(socket.roomCode).emit("game-state-update", room.gameState);
       }
