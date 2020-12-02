@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import Host from "./Host";
+import HostView from "./Host";
+import PlayerView from "./Player";
 import { useParams } from "react-router-dom";
 import io from "socket.io-client";
 import useNavigation from "../../hooks/useNavigation";
@@ -42,7 +43,11 @@ const Play: React.FC = () => {
   }
 
   if (playerState?.isHost) {
-    return <Host socket={socket} username={playerState.username} />;
+    return <HostView socket={socket} username={playerState.username} />;
+  }
+
+  if (playerState?.isHost === false) {
+    return <PlayerView socket={socket} username={playerState.username} />;
   }
 
   return (

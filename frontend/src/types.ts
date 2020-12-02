@@ -10,6 +10,7 @@ export type Player = {
   roomCode: string;
   username: string;
   isHost: boolean;
+  ready: boolean;
 };
 
 export type GameState = {

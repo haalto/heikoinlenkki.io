@@ -49,7 +49,10 @@ const Game: React.FC = () => {
 
   const renderPlayers = (players: Player[]) => {
     return players.map((p, i) => (
-      <div key={i}>{p.isHost ? <b>{p.username}</b> : p.username}</div>
+      <div key={i}>
+        {p.isHost ? <b>{p.username}</b> : p.username} Ready:{" "}
+        {p.ready.toString()}
+      </div>
     ));
   };
 

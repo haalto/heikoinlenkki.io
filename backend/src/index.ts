@@ -22,7 +22,7 @@ type GameState = {
   players: PlayerData[];
 };
 
-type Player = {
+type JoiningPlayerData = {
   roomCode: string;
   username: string;
 };
@@ -36,6 +36,7 @@ interface SocketWithProps extends Socket {
 interface PlayerData {
   username: string;
   isHost: boolean;
+  ready: boolean;
 }
 
 class GameRoom {
@@ -47,6 +48,11 @@ class GameRoom {
     this.roomCode = roomCode;
     this.gameState = { gameStarted: false, players: [] };
     this.sockets = [];
+  }
+
+  getGameState() {
+    const players = this.sockets.map((s) => s.playerData);
+    return { ...this.gameState, players };
   }
 }
 
@@ -64,7 +70,7 @@ io.on("connection", (socket: SocketWithProps) => {
     socket.join(roomCode);
   });
 
-  socket.on("join-room-player", (player: Player) => {
+  socket.on("join-room-player", (player: JoiningPlayerData) => {
     console.log(`${player.username} joining room: ${player.roomCode}`);
 
     const room = rooms.find((r) => r.roomCode === player.roomCode);
@@ -91,6 +97,7 @@ io.on("connection", (socket: SocketWithProps) => {
     socket.playerData = {
       username: player.username,
       isHost: room?.sockets.length === 0,
+      ready: false,
     };
     socket.roomCode = player.roomCode;
 
@@ -116,4 +123,25 @@ io.on("connection", (socket: SocketWithProps) => {
       }
     }
   });
+
+  socket.on("player-ready", (rdy: boolean) => {
+    socket.playerData.ready = rdy;
+    const room = getRoomByCode(socket.roomCode);
+    io.to(socket.roomCode).emit("game-state-update", room?.getGameState());
+  });
+  socket.on("disconnect", () => {
+    if (socket.type === "GAME") {
+      console.log(`Game room ${socket.roomCode} disconnected`);
+    }
+
+    if (socket.type === "PLAYER") {
+      console.log(
+        `Player ${socket.playerData.username} was disconnected from room ${socket.roomCode}`
+      );
+    }
+  });
 });
+
+function getRoomByCode(roomCode: string) {
+  return rooms.find((r) => r.roomCode === roomCode);
+}
